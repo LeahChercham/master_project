@@ -1,0 +1,10 @@
+numpy
+pandas
+openmeteo_requests
+requests_cache
+retry_requests
+pmdarima
+statsmodels
+fastapi
+uvicorn
+pydantic
