@@ -1,0 +1,9 @@
+Script python pour la génération des prédictions à une date donnée :
+- Si nécessaire, télécharger les données manquantes (plus récentes) et les
+sauvegarder dans la base de données,
+- Entraîner le modèle pour une période d’une durée prédéfinie qui précède la 
+date à laquelle les prédictions doivent être faites, en utilisant l’algorithme et 
+les paramètres identifiés dans la phase d’expérimentation et les données 
+historiques disponibles dans la base de données locale,
+- Générer les prédictions avec le modèle obtenu et les sauvegarder dans la base 
+de données.
