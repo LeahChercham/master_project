@@ -8,3 +8,4 @@ statsmodels
 fastapi
 uvicorn
 pydantic
+mlflow
