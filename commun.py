@@ -33,33 +33,6 @@ model_name = MODEL_NAME
 
 weather_url = WEATHER_URL
 
-def preprocess_data(X):
-    print(40*"_")
-    print("Preprocessing data...")
-    
-    res = X.copy()
-    
-    res = scaling_dew(res)
-    
-    # res = # TODO: finish this function
-    
-    
-    
-    print("Preprocessing done...")
-    print(40*"_")
-    return res
-
-
-def preprocess_dew_(X):
-    res = X.copy()
-
-    # Apply MinMaxScaler to the 'dew_point_2m' column
-    scaler = MinMaxScaler(feature_range=(0, 1))
-    res['dew_point_2m_normalized'] = scaler.fit_transform(res[['dew_point_2m']])
-    res = res.drop(columns=['dew_point_2m'])
-
-    return res
-
 
 def separate_xy(df, target_column):
     # Split the data into features and target

@@ -3,7 +3,7 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
-from api.data.db_functions import retrieve_training_data
+from api.data.db_functions import retrieve_training_data, save_to_db, get_training_averages_from_db, get_training_data_for_date_minus_one_year
 
 import commun 
 # Preprocessing functions
@@ -56,22 +56,25 @@ def get_time(df):
     return df
 
 
-def get_mean_by_cat(data, cat_feature, value_feature):
-    ''' Function that returns a dictionary where:
-    the keys correspond to unique values of `cat_feature`, and
-    the values correspond to average values of `real_feature`.'''
-    return dict(data.groupby(cat_feature)[value_feature].mean())
 
-
-def create_year_lags(df):
-    # getting the temperature from a year ago
+def create_year_lags(df, training = True):
     lag_distance_year = int(365*24/3 )
-    df[f'year_lag_{lag_distance_year}'] = df["temperature_2m"].shift(lag_distance_year)
-    df.dropna(inplace=True)
+    
+    if training:
+        # getting the temperature from a year ago
+        df[f'year_lag_{lag_distance_year}'] = df["temperature_2m"].shift(lag_distance_year)
+        df.dropna(inplace=True)
+    else:
+        # Retrieve training data for the date minus one year
+        training_data = get_training_data_for_date_minus_one_year(df.index[0])
+        df[f'year_lag_{lag_distance_year}'] = training_data[f'year_lag_{lag_distance_year}'].values
+
+    print(f'lags: {df[f'year_lag_{lag_distance_year}']}')
+    
     return df
 
 
-def preprocessing(df, training=True):
+def preprocessing(df, training=True, conn=None, cursor=None):
     '''Full preprocessing function, for training and prediction data. Calculating lags and means.'''
     print(40*'_')
     print()
@@ -81,21 +84,59 @@ def preprocessing(df, training=True):
     data.set_index('date_time', inplace=True)
     data.index = pd.to_datetime(data.index) 
     
-    data = create_year_lags(data)
+    data = create_year_lags(data, training)
+    
+    
     data["month"] = data.index.month
     data["year"] = data.index.year
     data = get_time(data)
     data = get_season(data)
     
-    # calculate average values only on train data to avoid data leak
-    data["month_average"] = list(map(get_mean_by_cat(data, "month", "temperature_2m").get, data.month))
-    data["year_average"] = list(map(get_mean_by_cat(data, "year", "temperature_2m").get, data.year))
-    data["season_average"] = list(map(get_mean_by_cat(data, "season", "temperature_2m").get, data.season))
-    data["time_of_day_average"] = list(map(get_mean_by_cat(data, "time_of_day", "temperature_2m").get, data.time_of_day))
+    av_names = ['averages_month', 'averages_year', 'averages_season', 'averages_time_of_day', 'averages_years_average']
+    
+    if training:
+        averages = {}
+        
+        # calculate average values only on train data to avoid data leak
+        averages["month"] = data.groupby("month")["temperature_2m"].mean()
+        averages["year"] = data.groupby("year")["temperature_2m"].mean()
+        averages["season"] = data.groupby("season")["temperature_2m"].mean()
+        averages["time_of_day"] = data.groupby("time_of_day")["temperature_2m"].mean()
+        averages["years_average"] = averages["year"].mean()
 
+        averages_year = pd.DataFrame.from_dict({"temperature_2m":averages["year"]})
+        averages_month = pd.DataFrame.from_dict({"temperature_2m": averages["month"]})
+        averages_season = pd.DataFrame.from_dict({"temperature_2m":averages["season"]})
+        averages_time_of_day = pd.DataFrame.from_dict({"temperature_2m":averages["time_of_day"]})
+        averages_years_average = pd.DataFrame.from_dict({"temperature_2m": averages["years_average"]}, orient='index', columns=["years_average"])
+        averages_years_average.index.name = "years_average"
+
+        
+        all_averages = [averages_month, averages_year, averages_season, averages_time_of_day, averages_years_average]
+
+        # Save each average to the database
+        for av, av_name in zip(all_averages, av_names):
+            save_to_db(av, av_name, conn, cursor)
+
+    else:
+        # Load averages from database
+        all_averages = get_training_averages_from_db(av_names)
+    
+    print(50*"_")
+    print(50*"HIER")
+    print(50*"!")
+    print(f'ALL averages PREDICTION {all_averages}')
+    
+    # Fill missing values with averages
+    data["month_average"] = data["month"].map(averages["month"])
+    data["year_average"] = data["year"].map(averages["year"])
+    data["season_average"] = data["season"].map(averages["season"])
+    data["time_of_day_average"] = data["time_of_day"].map(averages["time_of_day"])
+    
+    # Handle missing values for year average
     years_average_mean = data['year_average'].mean()
-
     data['year_average'].fillna(years_average_mean, inplace=True)
+    
 
     # drop features used for calculating average values
     data.drop(columns=["month","year", "season", "time_of_day"], axis=1, inplace=True)
@@ -108,6 +149,8 @@ def preprocessing(df, training=True):
         X = data
         y = None
 
+    print(40*'*')
+    print(f'preprocessed X: {X.head(1)} and y: {y.head(1)}')
     return X, y
     
 
@@ -118,7 +161,7 @@ def prepare_training_data(conn,cursor):
     data = retrieve_training_data(conn,cursor)
     
     # pre process it 
-    X, y = preprocessing(data, True)
+    X, y = preprocessing(data, True, conn, cursor)
     
     return X, y 
 

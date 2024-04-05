@@ -90,7 +90,7 @@ if __name__ == "__main__":
     # create and fit the model
     model = fit_model(X, y)
     
-    predictions = generate_predictions("2024-03-02")
+    predictions = generate_predictions("2024-03-02", conn, cursor)
     # start Fast API
     # uvicorn.run("main:app", port=8000, reload=True)
     

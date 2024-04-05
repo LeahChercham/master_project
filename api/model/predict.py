@@ -5,6 +5,7 @@ import numpy as np
 import sys
 import os
 from sklearn.metrics import mean_squared_error
+from api.model.train import preprocessing
 import commun
 import mlflow
 
@@ -12,10 +13,10 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.
 from api.data.db_functions import retrieve_true_labels_for_date, save_predictions
 
 
-def generate_predictions(input_data):
+def generate_predictions(input_data, conn, cursor):
     print(40*'_')
     print()
-    print("Generating predictions ... ")
+    print("Preparing Data for predictions ... ")
     
     logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
 
@@ -48,8 +49,16 @@ def generate_predictions(input_data):
     
     # preprocess data 
     # TODO preprocess the data we want to make predictions for
+    # date_time_array is one dimensional, but the preprocessing function expects a df
+    # Create a DataFrame from the array
+    df = pd.DataFrame({'date_time': date_time_array})
+    preprocessed_df = preprocessing(df, False, conn, cursor)
+
+    print(40*'_')
+    print()
+    print("Predicting ... ")
     # output a list of predictions (hours from 0 to 24 in 3h steps) TODO verify
-    predictions = loaded_model.predict(date_time_array)
+    predictions = loaded_model.predict(preprocessed_df)
     
     print(f'predictions: {predictions}')
     

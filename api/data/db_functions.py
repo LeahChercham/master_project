@@ -86,19 +86,26 @@ def get_data(url, params, column_names):
 
 
 
-def save_to_db(df, db_name):
+def save_to_db(df, db_name, conn=conn, cursor=cursor):
     # dataframe to save
     print(40*'_')
     print()
     df = df.copy()
     print(f'Saving to database {db_name}...')
     
-    df.to_sql(name=db_name, # Name of SQL Table
-              con=conn, # sqlite3.Connection
-              if_exists='replace', # drop the table before inserting new values. Means that i get all the data at all times
-              index=True, # DF index is date_time
-              index_label="date_time"  
+    if db_name == "averages":
+        df.to_sql(name=db_name, # Name of SQL Table
+            con=conn, # sqlite3.Connection
+            if_exists='replace',  # drop the table before inserting new values. Means that i get all the data at all times
             )
+    else:
+        df.to_sql(name=db_name, # Name of SQL Table
+                con=conn, # sqlite3.Connection
+                if_exists='replace',
+                index=True, # DF index is date_time
+                index_label="date_time"  
+                )
+        
     conn.commit()
     return f'Data saved to database {db_name}'
 
@@ -166,6 +173,9 @@ def retrieve_training_data(conn,cursor):
 
 
 def retrieve_true_labels_for_date(date):
+    print(40*'_')
+    print()
+    print("Retrieving True Labels...")
     day = date.day
     month = date.month
     year = date.year
@@ -182,6 +192,9 @@ def retrieve_true_labels_for_date(date):
 
 def save_predictions(date_time_array, predictions, true_labels, model_name):
     # in db predictions
+    print(40*'_')
+    print()
+    print("Saving predictions...")
     try:
         # Create a table to store predictions if it doesn't exist
         cursor.execute('''CREATE TABLE IF NOT EXISTS predictions (
@@ -201,3 +214,62 @@ def save_predictions(date_time_array, predictions, true_labels, model_name):
         return "Predictions saved successfully"
     except Exception as e:
         return f'error: {e}'
+    
+
+def get_training_averages_from_db(av_names):
+    print()
+    print("Get training averages from db...")
+    all_averages = []
+    
+    for av in av_names : 
+        query = f"SELECT * FROM {av}"
+    
+        # Execute the query
+        cursor.execute(query)
+        
+        # Fetch all rows from the query result
+        rows = cursor.fetchall()
+        
+        # Convert the rows to a DataFrame
+        columns = [desc[0] for desc in cursor.description]
+        df = pd.DataFrame(rows, columns=columns)
+        all_averages.append(df)
+    
+    return all_averages
+    
+    
+def get_training_data_for_date_minus_one_year(date):
+    # Calculate the date one year ago
+    year = date.year - 1
+    month = date.month
+    day = date.day
+    
+    if year < 2020 or year > 2023: # Training data period
+        return False
+
+    # INFO: # Not taking into account leap years
+    # if month == 2 and day == 29 and not is_leap_year(year):
+    #     day = 28
+    
+    one_year_ago = datetime(year, month, day)
+
+    # Convert date to strings in the format 'YYYY-MM-DD'
+    one_year_ago_str = one_year_ago.strftime('%Y-%m-%d')
+
+    # Construct and execute the SQL query to retrieve training data for the specified date minus one year
+    query = f"""
+            SELECT *
+            FROM your_training_table
+            WHERE date_time == '{one_year_ago_str}' 
+            """
+
+    cursor.execute(query)
+    training_data = cursor.fetchall()
+
+    # Convert the retrieved data into a DataFrame
+    columns = [desc[0] for desc in cursor.description]
+    training_data_df = pd.DataFrame(training_data)
+    
+    print(f'training_data_df {training_data_df}')
+    return training_data_df
+    
