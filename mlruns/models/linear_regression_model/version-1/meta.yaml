@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1712314715943
+current_stage: None
+description: null
+last_updated_timestamp: 1712314715943
+name: linear_regression_model
+run_id: d928348aaf3f46c0bbd29708526d2674
+run_link: null
+source: file:///C:/Users/LeahC/PROJET_FINAL/2024_BIHAR_FINAL_PROJECT/mlruns/0/d928348aaf3f46c0bbd29708526d2674/artifacts/model
+status: READY
+status_message: null
+storage_location: file:///C:/Users/LeahC/PROJET_FINAL/2024_BIHAR_FINAL_PROJECT/mlruns/0/d928348aaf3f46c0bbd29708526d2674/artifacts/model
+user_id: null
+version: 1

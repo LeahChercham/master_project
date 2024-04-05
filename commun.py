@@ -11,8 +11,8 @@ CONFIG_PATH = os.path.join(ROOT_DIR, 'config.ini')
 
 config = ConfigParser()
 config.read(CONFIG_PATH)
-LATITUDE = str(config.get("WEATHER_PARAMS", "LATITUDE"))
-LONGITUDE = str(config.get("WEATHER_PARAMS", "LONGITUDE"))
+LATITUDE = float(config.get("WEATHER_PARAMS", "LATITUDE"))
+LONGITUDE = float(config.get("WEATHER_PARAMS", "LONGITUDE"))
 START_DATE = str(config.get("WEATHER_PARAMS", "START_DATE"))
 END_DATE = str(config.get("WEATHER_PARAMS", "END_DATE"))
 HOURLY = str(config.get("WEATHER_PARAMS", "HOURLY"))
@@ -26,7 +26,10 @@ weather_params = {
 	"end_date": END_DATE,
 	"hourly": HOURLY,
 	"timezone": TIMEZONE
-}
+}    
+
+MODEL_NAME = str(config.get("MODEL", "MODEL_NAME"))
+model_name = MODEL_NAME
 
 weather_url = WEATHER_URL
 

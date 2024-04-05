@@ -8,9 +8,9 @@ import openmeteo_requests
 import requests_cache
 from retry_requests import retry
 import sqlite3
-import datetime
 import sys
 import os
+from datetime import datetime
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -20,11 +20,15 @@ conn = None
 cursor = None
 
 def create_db_connection():
+    print(40*'_')
+    print()
+    print("Creating connection...")
     global conn, cursor
     # Connect to SQLLITE database
     conn = sqlite3.connect('weather.db')
     cursor = conn.cursor()
     
+    print("Connection created successfully")
     return conn, cursor
 
 
@@ -40,11 +44,14 @@ def create_db_connection():
 
 
 def get_data(url, params, column_names):
+    print(40*'_')
+    print()
+    print("Getting data from Open Meteo API Client...")
     # Setup the Open-Meteo API client with cache and retry on error
     cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
     retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
     openmeteo = openmeteo_requests.Client(session = retry_session)
-    
+
     responses = openmeteo.weather_api(url, params=params)
     response = responses[0]
 
@@ -74,13 +81,15 @@ def get_data(url, params, column_names):
 
     # Resample the DataFrame to 3-hour intervals and calculate mean
     df_resampled = df.resample('3h').mean()
-
+    print(f'Data head(1) : {df_resampled.head(1)}')
     return df_resampled
 
 
 
 def save_to_db(df, db_name):
     # dataframe to save
+    print(40*'_')
+    print()
     df = df.copy()
     print(f'Saving to database {db_name}...')
     
@@ -108,30 +117,38 @@ def refresh_database():
     The data here are the true labels. It also stores data up until last year in a training database.
     The refresh should happen once on start of the application. 
     '''
-    date = datetime.datetime.now()
+    print(40*'_')
+    print()
+    print("Refreshing database...")
+    date = datetime.now()
     
     params = commun.weather_params
-    params.end_date = str(date)
+
+    # date to only date (without time)
+    date_only = date.date()
+    params["end_date"] = str(date_only)
     
-    print(f'params.end_date : {params.end_date}')
-    
-    df = get_data(commun.weather_url, params, params.hourly)
+    df = get_data(commun.weather_url, params, ["temperature_2m"])
     
     # Saving all the data
     message = save_to_db(df, "weather")
-    
-    # Saving only the training data
-    # Filter data up until 31/12/2023
-    df_training = df[df.index <= datetime.datetime(2023, 12, 31)]
+
+    # Filter data up to end 2023 for training    
+    desired_date = datetime(2023, 12, 31).date()
+    df_training = df[df.index.date <= desired_date]
+
     message_training = save_to_db(df_training, "training")
     
     print(f'message: {message}')
     print(f'message_training: {message_training}')
     
-    return f'Database weather refreshed with data up until {date} and training data stored up until 31/12/2023'
+    return f'Database weather refreshed with data up until {date_only} and training data stored up until 31/12/2023'
 
 
-def retrieve_training_data():
+def retrieve_training_data(conn,cursor):
+    print(40*'_')
+    print()
+    print(f'Retrieving training data...')
     # Query to retrieve all data from the training database
     query = "SELECT * FROM training"
     

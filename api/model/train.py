@@ -3,8 +3,9 @@ import numpy as np
 import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
-from api.data.data import retrieve_training_data
+from api.data.db_functions import retrieve_training_data
 
+import commun 
 # Preprocessing functions
 
 def get_season(df):
@@ -72,7 +73,14 @@ def create_year_lags(df):
 
 def preprocessing(df, training=True):
     '''Full preprocessing function, for training and prediction data. Calculating lags and means.'''
+    print(40*'_')
+    print()
+    print(f'Preprocessing data ...')
     data = pd.DataFrame(df.copy())
+    # Set date column as index
+    data.set_index('date_time', inplace=True)
+    data.index = pd.to_datetime(data.index) 
+    
     data = create_year_lags(data)
     data["month"] = data.index.month
     data["year"] = data.index.year
@@ -103,23 +111,11 @@ def preprocessing(df, training=True):
     return X, y
     
 
-def fit_model(X_train, y_train):
-    ''' This function is creating and fitting a linear regression model
-    Model to create: linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False '''
-    print("Creating model ...")
-    lr = LinearRegression()
-        
-    print('Training model ...')
-    lr.fit(X_train, y_train)
-    
-    return lr
 
-
-
-def prepare_training_data():
+def prepare_training_data(conn,cursor):
     '''Getting the training data from the training db and preprocessing it'''
     # get the data 
-    data = retrieve_training_data()
+    data = retrieve_training_data(conn,cursor)
     
     # pre process it 
     X, y = preprocessing(data, True)
@@ -132,21 +128,25 @@ def prepare_training_data():
 def fit_model(X_train, y_train):
     ''' This function is creating and fitting a linear regression model
     Model to create: linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False '''
-    model_name = "linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False"
+    model_name = commun.model_name
+    print(40*'_')
+    print()
     print("Creating model ...")
     # Define and train the model
     lr = LinearRegression()
-        
+    
+    print()
     print('Training model ...')
     lr.fit(X_train, y_train)
         
-    with mlflow.start_run():
+    with mlflow.start_run(run_name=model_name) as run:
         mlflow.log_param("model", model_name)
-        mlflow.sklearn.log_model(lr, "model")
-        
+        mlflow.sklearn.log_model(sk_model=lr,  artifact_path="model")
     
-    model_uri = "runs:/lr_model_trained"
-    mlflow.register_model(model_uri, "linear_regression_model")
-    print("Model saved to MLflow")
+    # Register the model using the run ID
+    mlflow.register_model(f"models", model_name)
+
+    print()
+    print("Model saved to MLflow Registry")
     
     return lr
