@@ -52,7 +52,7 @@ def generate_predictions(input_data, conn, cursor):
     # date_time_array is one dimensional, but the preprocessing function expects a df
     # Create a DataFrame from the array
     df = pd.DataFrame({'date_time': date_time_array})
-    preprocessed_df = preprocessing(df, False, conn, cursor)
+    preprocessed_df, y = preprocessing(df, False, conn, cursor)
 
     print(40*'_')
     print()
@@ -63,10 +63,10 @@ def generate_predictions(input_data, conn, cursor):
     print(f'predictions: {predictions}')
     
     # TODO get true labels TEST
-    true_labels = retrieve_true_labels_for_date(input_data)
+    true_labels = retrieve_true_labels_for_date(input_data, conn, cursor)
     
     # TODO: save predictions to db TEST
-    save_predictions(predictions, true_labels, commun.model_name)
+    save_predictions(predictions, true_labels, commun.model_name, conn, cursor)
     
     
     # TODO: save predictions as run to mlflow and calculate score

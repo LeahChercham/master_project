@@ -1,0 +1,14 @@
+aliases: []
+creation_timestamp: 1712342578226
+current_stage: None
+description: null
+last_updated_timestamp: 1712342578226
+name: linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False
+run_id: null
+run_link: null
+source: models
+status: READY
+status_message: null
+storage_location: models
+user_id: null
+version: 13

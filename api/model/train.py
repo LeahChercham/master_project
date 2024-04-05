@@ -57,7 +57,7 @@ def get_time(df):
 
 
 
-def create_year_lags(df, training = True):
+def create_year_lags(df, training = True, conn=None, cursor=None):
     lag_distance_year = int(365*24/3 )
     
     if training:
@@ -66,12 +66,29 @@ def create_year_lags(df, training = True):
         df.dropna(inplace=True)
     else:
         # Retrieve training data for the date minus one year
-        training_data = get_training_data_for_date_minus_one_year(df.index[0])
-        df[f'year_lag_{lag_distance_year}'] = training_data[f'year_lag_{lag_distance_year}'].values
+        training_data = get_training_data_for_date_minus_one_year(df.index[0], conn, cursor)
+        df[f'year_lag_{lag_distance_year}'] = training_data[f'temperature_2m'].values
 
-    print(f'lags: {df[f'year_lag_{lag_distance_year}']}')
+    print(f'df with lag: {df}')
     
     return df
+
+
+
+# Define functions to map values from averages dictionaries
+def map_month_average(month, averages):
+    return averages.get(str(month))
+
+def map_year_average(year, averages):
+    return averages.get(str(year))
+
+def map_season_average(season, averages):
+    return averages.get(season)
+
+def map_time_of_day_average(time_of_day, averages):
+    return averages.get(time_of_day)
+
+
 
 
 def preprocessing(df, training=True, conn=None, cursor=None):
@@ -84,7 +101,7 @@ def preprocessing(df, training=True, conn=None, cursor=None):
     data.set_index('date_time', inplace=True)
     data.index = pd.to_datetime(data.index) 
     
-    data = create_year_lags(data, training)
+    data = create_year_lags(data, training, conn, cursor)
     
     
     data["month"] = data.index.month
@@ -108,49 +125,61 @@ def preprocessing(df, training=True, conn=None, cursor=None):
         averages_month = pd.DataFrame.from_dict({"temperature_2m": averages["month"]})
         averages_season = pd.DataFrame.from_dict({"temperature_2m":averages["season"]})
         averages_time_of_day = pd.DataFrame.from_dict({"temperature_2m":averages["time_of_day"]})
-        averages_years_average = pd.DataFrame.from_dict({"temperature_2m": averages["years_average"]}, orient='index', columns=["years_average"])
+        averages_years_average = pd.DataFrame.from_dict({"temperature_2m": averages["years_average"]}, orient='index', columns=["temperature_2m"])
         averages_years_average.index.name = "years_average"
 
-        
-        all_averages = [averages_month, averages_year, averages_season, averages_time_of_day, averages_years_average]
 
+        
+        all_averages_array = [averages_month, averages_year, averages_season, averages_time_of_day, averages_years_average]
+        
+        all_averages = {}
+        
         # Save each average to the database
-        for av, av_name in zip(all_averages, av_names):
+        for av, av_name in zip(all_averages_array, av_names):
             save_to_db(av, av_name, conn, cursor)
+            all_averages[av_name] = av.to_dict()
+            
 
     else:
         # Load averages from database
-        all_averages = get_training_averages_from_db(av_names)
+        all_averages = get_training_averages_from_db(av_names, conn, cursor)
     
-    print(50*"_")
-    print(50*"HIER")
-    print(50*"!")
-    print(f'ALL averages PREDICTION {all_averages}')
     
-    # Fill missing values with averages
-    data["month_average"] = data["month"].map(averages["month"])
-    data["year_average"] = data["year"].map(averages["year"])
-    data["season_average"] = data["season"].map(averages["season"])
-    data["time_of_day_average"] = data["time_of_day"].map(averages["time_of_day"])
-    
-    # Handle missing values for year average
-    years_average_mean = data['year_average'].mean()
-    data['year_average'].fillna(years_average_mean, inplace=True)
-    
+    if training:
+        # Apply mapping functions to create new columns
+        data["month_average"] = data["month"].apply(lambda x: all_averages["averages_month"]["temperature_2m"].get(x))
+        data["year_average"] = data["year"].apply(lambda x: all_averages["averages_year"]["temperature_2m"].get(x))
+        data["season_average"] = data["season"].apply(lambda x: all_averages["averages_season"]["temperature_2m"].get(x))
+        data["time_of_day_average"] = data["time_of_day"].apply(lambda x: all_averages["averages_time_of_day"]["temperature_2m"].get(x))
+            # Handle missing values for year average
+        years_average_mean = data['year_average'].mean()
+        data['year_average'].fillna(years_average_mean, inplace=True)   
 
+    else: # dictionnary for prediction is slightly different
+        data["month_average"] = data["month"].apply(lambda x: all_averages["averages_month"]["temperature_2m"][list(all_averages["averages_month"]["date_time"].values()).index(x)])
+        data["year_average"] = all_averages["averages_years_average"]["temperature_2m"][0]
+        data["season_average"] = data["season"].apply(lambda x: all_averages["averages_season"]["temperature_2m"][list(all_averages["averages_season"]["date_time"].values()).index(x)])
+        data["time_of_day_average"] = data["time_of_day"].apply(lambda x: all_averages["averages_time_of_day"]["temperature_2m"][list(all_averages["averages_time_of_day"]["date_time"].values()).index(x)])
+
+    
     # drop features used for calculating average values
     data.drop(columns=["month","year", "season", "time_of_day"], axis=1, inplace=True)
+    data.reset_index(inplace=True)
 
     if training:
         # Split data
         X = data.drop(["temperature_2m"], axis=1)
         y = data["temperature_2m"]
+        X.set_index('date_time', inplace=True)
+
     else: 
         X = data
         y = None
+        X.set_index('date_time', inplace=True)
+        
 
     print(40*'*')
-    print(f'preprocessed X: {X.head(1)} and y: {y.head(1)}')
+    print(f'preprocessed X: {X}')
     return X, y
     
 

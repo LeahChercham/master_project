@@ -16,8 +16,6 @@ from datetime import datetime
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import commun
 
-conn = None
-cursor = None
 
 def create_db_connection():
     print(40*'_')
@@ -30,17 +28,6 @@ def create_db_connection():
     
     print("Connection created successfully")
     return conn, cursor
-
-
-# Database Tables
-# weather: first table contains all the original data, the true labels from 01/01/2020 up until today
-# training: second table contains the training data from 01/01/2020 up until 31/12/2023
-# predictions: third table contains the prediction label, the true label and the rmse score : empty at first
-
-# TODO: I dont think i need this: 
-# cursor.execute(''' CREATE TABLE IF NOT EXISTS weather(date_time, temperature_2m, dew_point_2m) ''')
-# cursor.execute('''CREATE TABLE IF NOT EXISTS training(date_time, temperature_2m, dew_point, month, year, day)''') #TODO: adapt to real additional variables used
-# cursor.execute(''' CREATE TABLE IF NOT EXISTS predictions(date_time, pred_temperature_2m, true_temperature_2m, rmse, model_id) ''')
 
 
 def get_data(url, params, column_names):
@@ -85,8 +72,7 @@ def get_data(url, params, column_names):
     return df_resampled
 
 
-
-def save_to_db(df, db_name, conn=conn, cursor=cursor):
+def save_to_db(df, db_name, conn, cursor):
     # dataframe to save
     print(40*'_')
     print()
@@ -110,13 +96,7 @@ def save_to_db(df, db_name, conn=conn, cursor=cursor):
     return f'Data saved to database {db_name}'
 
 
-def test_db():
-    rows = cursor.execute("SELECT * FROM weather LIMIT 5").fetchall()
-
-    return rows
-
-
-def refresh_database():
+def refresh_database(conn, cursor):
     '''
     This function gets the current date, prepares the params, 
     get's back a df from another function get_data (which makes an API call to openweather)
@@ -138,13 +118,13 @@ def refresh_database():
     df = get_data(commun.weather_url, params, ["temperature_2m"])
     
     # Saving all the data
-    message = save_to_db(df, "weather")
+    message = save_to_db(df, "weather", conn, cursor)
 
     # Filter data up to end 2023 for training    
     desired_date = datetime(2023, 12, 31).date()
     df_training = df[df.index.date <= desired_date]
 
-    message_training = save_to_db(df_training, "training")
+    message_training = save_to_db(df_training, "training", conn, cursor)
     
     print(f'message: {message}')
     print(f'message_training: {message_training}')
@@ -172,7 +152,7 @@ def retrieve_training_data(conn,cursor):
     return df_training
 
 
-def retrieve_true_labels_for_date(date):
+def retrieve_true_labels_for_date(date, conn, cursor):
     print(40*'_')
     print()
     print("Retrieving True Labels...")
@@ -190,7 +170,8 @@ def retrieve_true_labels_for_date(date):
     print(f"true labels: {true_labels}")
     return true_labels
 
-def save_predictions(date_time_array, predictions, true_labels, model_name):
+
+def save_predictions(date_time_array, predictions, true_labels, model_name, conn, cursor):
     # in db predictions
     print(40*'_')
     print()
@@ -216,10 +197,10 @@ def save_predictions(date_time_array, predictions, true_labels, model_name):
         return f'error: {e}'
     
 
-def get_training_averages_from_db(av_names):
+def get_training_averages_from_db(av_names, conn, cursor):
     print()
     print("Get training averages from db...")
-    all_averages = []
+    all_averages = {}
     
     for av in av_names : 
         query = f"SELECT * FROM {av}"
@@ -233,12 +214,14 @@ def get_training_averages_from_db(av_names):
         # Convert the rows to a DataFrame
         columns = [desc[0] for desc in cursor.description]
         df = pd.DataFrame(rows, columns=columns)
-        all_averages.append(df)
+        df_dict = df.to_dict()
+        
+        all_averages[av] = df_dict
     
     return all_averages
     
     
-def get_training_data_for_date_minus_one_year(date):
+def get_training_data_for_date_minus_one_year(date, conn, cursor): # Works
     # Calculate the date one year ago
     year = date.year - 1
     month = date.month
@@ -255,21 +238,22 @@ def get_training_data_for_date_minus_one_year(date):
 
     # Convert date to strings in the format 'YYYY-MM-DD'
     one_year_ago_str = one_year_ago.strftime('%Y-%m-%d')
+    print(f'one year ago str : {one_year_ago_str}')
 
     # Construct and execute the SQL query to retrieve training data for the specified date minus one year
     query = f"""
             SELECT *
-            FROM your_training_table
-            WHERE date_time == '{one_year_ago_str}' 
+            FROM training
+            WHERE DATE(date_time) == '{one_year_ago_str}' 
             """
 
     cursor.execute(query)
-    training_data = cursor.fetchall()
+    rows = cursor.fetchall()
 
     # Convert the retrieved data into a DataFrame
     columns = [desc[0] for desc in cursor.description]
-    training_data_df = pd.DataFrame(training_data)
+    training_data_df = pd.DataFrame(rows, columns=columns)
     
-    print(f'training_data_df {training_data_df}')
+    print(f'Getting training data minus one year: {training_data_df}')
     return training_data_df
     

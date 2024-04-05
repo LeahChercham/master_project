@@ -82,7 +82,7 @@ if __name__ == "__main__":
     conn, cursor = create_db_connection()
     
     # refresh database with data up to date and training da
-    print(refresh_database())
+    print(refresh_database(conn,cursor))
     
     # use data until 12/2023 as training data and preprocess it
     X, y = prepare_training_data(conn, cursor)
@@ -91,8 +91,10 @@ if __name__ == "__main__":
     model = fit_model(X, y)
     
     predictions = generate_predictions("2024-03-02", conn, cursor)
+    
     # start Fast API
     # uvicorn.run("main:app", port=8000, reload=True)
+    
     
     print("printing test")
     # at the end, close connection  TODO
