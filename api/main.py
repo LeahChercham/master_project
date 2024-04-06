@@ -16,7 +16,7 @@ from data.db_functions import refresh_database, create_db_connection
 
 from api.model.train import fit_model, prepare_training_data
 
-from api.model.predict import generate_predictions, get_combined_data
+from api.model.predict import generate_predictions, generate_period_predictions
 
 app = FastAPI()
 
@@ -29,29 +29,15 @@ def root():
     return {"message": "Hello world!"}
 
 
-# @app.post("/predict/{date}/")  # TODO: example for body
-# def predict(data: DataForm):
-#     try:
-#         print(f'date = {data.selected_date}')
-#         # Generate predictions for the specified date using the trained model
-#         predictions = generate_predictions(date)
-        
-#         return {"predictions": predictions}
-
-    # except Exception as e:
-    #     # Return error message if any exception occurs
-    #     raise HTTPException(status_code=500, detail=str(e))
-
-
 # Define endpoint for retrieving predictions for a specific date
-@app.get("/predictions/{date}/")
+@app.get("/predictions/{date}/") # works
 def get_predictions(date: date):
     print(f'date: {date}')
     
     try:
         conn, cursor = create_db_connection()
         # Retrieve predictions for the specified date
-        predictions = generate_predictions(date, conn, cursor)
+        predictions, pred_true = generate_predictions(date, conn, cursor)
         
         return {"predictions": predictions}
     
@@ -63,10 +49,12 @@ def get_predictions(date: date):
 @app.get("/combined_predictions/")
 def get_combined_predictions(start_date: str, end_date: str):
     try:
-        # Retrieve combined predictions and observed data for the specified period
-        combined_data = get_combined_data(start_date, end_date)
+        conn, cursor = create_db_connection()
         
-        return {"combined_data": combined_data}
+        # Retrieve combined predictions and observed data for the specified period
+        predictions, pred_true = generate_period_predictions(start_date,end_date, conn, cursor)
+        
+        return {"combined_data": pred_true}
     
     except Exception as e:
         # Return error message if any exception occurs
@@ -92,10 +80,12 @@ if __name__ == "__main__":
     # create and fit the model
     model = fit_model(X, y)
     
-    predictions = generate_predictions("2024-03-02", conn, cursor)
+    # predictions, pred_true = generate_predictions("2024-03-02", conn, cursor)
+    predictions, pred_true = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
     print(f'predictions: {predictions}')
+    print(f'pred_true: {pred_true}')
     
     # start Fast API
-    uvicorn.run("main:app", port=8000, reload=True)
+    # uvicorn.run("main:app", port=8000, reload=True)
 
     

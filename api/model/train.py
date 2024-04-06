@@ -57,13 +57,28 @@ def get_time(df):
 
 
 
-def create_year_lags(df, training = True, conn=None, cursor=None):
+def create_year_lags(df, training = True, conn=None, cursor=None, date_range=None):
     lag_distance_year = int(365*24/3 )
     
     if training:
         # getting the temperature from a year ago
         df[f'year_lag_{lag_distance_year}'] = df["temperature_2m"].shift(lag_distance_year)
         df.dropna(inplace=True)
+    elif date_range:
+        training_data = []
+        for date in date_range:
+            # Retrieve training data for the specified date minus one year
+            td = get_training_data_for_date_minus_one_year(date, conn, cursor)
+            training_data.append(td)
+            
+        # Concatenate the list of DataFrames along the rows
+        training_data = pd.concat(training_data, ignore_index=True)
+        
+        # Set the 'date_time' column as the index
+        training_data.set_index('date_time', inplace=True)
+        
+        # Assign the temperature values to the corresponding column in df
+        df[f'year_lag_{lag_distance_year}'] = training_data[f'temperature_2m'].values
     else:
         # Retrieve training data for the date minus one year
         training_data = get_training_data_for_date_minus_one_year(df.index[0], conn, cursor)
@@ -89,7 +104,7 @@ def map_time_of_day_average(time_of_day, averages):
 
 
 
-def preprocessing(df, training=True, conn=None, cursor=None):
+def preprocessing(df, training=True, conn=None, cursor=None, period=False, date_range=None):
     '''Full preprocessing function, for training and prediction data. Calculating lags and means.'''
     print(40*'_')
     print()
@@ -99,7 +114,10 @@ def preprocessing(df, training=True, conn=None, cursor=None):
     data.set_index('date_time', inplace=True)
     data.index = pd.to_datetime(data.index) 
     
-    data = create_year_lags(data, training, conn, cursor)
+    if period:
+        data = create_year_lags(data, training, conn, cursor, date_range=date_range)
+    else:
+        data = create_year_lags(data, training, conn, cursor)
     
     
     data["month"] = data.index.month

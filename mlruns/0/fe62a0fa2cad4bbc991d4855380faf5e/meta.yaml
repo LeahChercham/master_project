@@ -1,0 +1,15 @@
+artifact_uri: file:///C:/Users/LeahC/PROJET_FINAL/2024_BIHAR_FINAL_PROJECT/mlruns/0/fe62a0fa2cad4bbc991d4855380faf5e/artifacts
+end_time: 1712404450791
+entry_point_name: ''
+experiment_id: '0'
+lifecycle_stage: active
+run_id: fe62a0fa2cad4bbc991d4855380faf5e
+run_name: linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False
+run_uuid: fe62a0fa2cad4bbc991d4855380faf5e
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1712404446608
+status: 3
+tags: []
+user_id: LeahC

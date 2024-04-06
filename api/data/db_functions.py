@@ -185,6 +185,28 @@ def retrieve_true_labels_for_date(date, conn, cursor):
     print(f"true labels: {true_labels}")
     return true_labels
 
+
+def retrieve_true_labels_for_dates(dates, conn, cursor):
+    print(40 * '_')
+    print()
+    print("Retrieving True Labels...")
+    
+    true_labels = []
+    for date in dates:
+        date_str = date.strftime('%Y-%m-%d')
+        query = "SELECT * FROM weather WHERE DATE(date_time) = ?"
+        
+        # Execute the query with the parameters
+        cursor.execute(query, (date_str,))
+        
+        # Fetch the results and append to the list of true_labels
+        true_labels.extend(cursor.fetchall())
+        
+    print(f"true labels: {true_labels}")
+    return true_labels
+
+
+
     
 
 def get_training_averages_from_db(av_names, conn, cursor):
