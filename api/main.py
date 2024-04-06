@@ -8,6 +8,7 @@ import sqlite3
 from fastapi import FastAPI, HTTPException, Query
 from datetime import date, datetime
 from typing import Optional, List
+from fastapi.responses import RedirectResponse
 import pandas as pd
 import uvicorn
 from pydantic import BaseModel, Field
@@ -19,6 +20,13 @@ from api.model.train import fit_model, prepare_training_data
 
 from api.model.predict import generate_predictions, generate_period_predictions
 
+import logging
+from commun import sw_version, weather_params
+
+# Set up logging configuration
+logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+
 app = FastAPI()
 
 conn = sqlite3.connect('weather.db')
@@ -29,32 +37,36 @@ class DataForm(BaseModel):
 
 @app.get("/") # TODO redirect to docs
 def root():
-    return {"message": "Hello world!"}
+    logging.info(f'Redirecting from "/" to "/docs"')
+    # Redirect to the "/docs" endpoint
+    return RedirectResponse(url="/docs")
 
 
 # Define endpoint for retrieving predictions for a specific date
 @app.get("/predictions/{date}/") # works
 def get_predictions(date: date):
-    print(f'date: {date}')
-    
+    logging.info(f'Received request for predictions for date: {date}')
+    print(f'Received request for predictions for date: {date}')
+
     try:
         conn, cursor = create_db_connection()
         # Retrieve predictions for the specified date
         predictions, pred_true = generate_predictions(date, conn, cursor)
-        
+        logging.info(f'Returning predictions for date: {date}')
         return {"predictions": predictions}
     
     except Exception as e:
         # Return error message if any exception occurs
-        raise HTTPException(status_code=500, detail=str(e)) # prepare exceptions TODO
-
+        logging.error(f'Error occurred while processing prediction request for date {date}: {e}')
+        raise HTTPException(status_code=500, detail=str(e))
+    
 # Define endpoint for retrieving predictions combined with observed data for a specific period
 @app.get("/combined_predictions/{start_date}/{end_date}/")
 def get_combined_predictions(start_date: date, end_date: date):
     print(f'start_date and end_date : {start_date} , {end_date}')
+    logging.info(f'start_date and end_date : {start_date} , {end_date}')
     try:
         conn, cursor = create_db_connection()
-        print(f' conn: {conn}')
         # Retrieve combined predictions and observed data for the specified period
         predictions, pred_true = generate_period_predictions(start_date,end_date, conn, cursor)
         
@@ -62,16 +74,34 @@ def get_combined_predictions(start_date: date, end_date: date):
     
     except Exception as e:
         # Return error message if any exception occurs
+        logging.error(f'Error occurred while processing combined_predictions for start_date {start_date} and end_date {end_date}: {e}')
         raise HTTPException(status_code=500, detail=str(e))
+    
+    
 
-# Define a basic health check endpoint
-@app.get("/healthcheck/") #INFO: this works, TODO: might elaborate
+# Basic health check endpoint
+@app.get("/healthcheck/")
 def healthcheck():
     return {"status": "ok"}
 
+
+# Version endpoint
+@app.get("/version/")
+def version():
+    try:
+        logging.info(f'Version request received')
+
+        return {"software_version": sw_version, 
+                "data_version": weather_params}
+        
+    except Exception as e:
+        logging.error(f"Error occurred while processing version request: {str(e)}")
+        return {"error": "An error occurred while processing the request"}, 500
+
 if __name__ == "__main__":
     
-    print("Starting")
+    logging.info(f'Running api/main.py')
+
     # Create database connection 
     conn, cursor = create_db_connection()
     
@@ -84,12 +114,11 @@ if __name__ == "__main__":
     # create and fit the model
     model = fit_model(X, y)
     
-    # predictions, pred_true = generate_predictions("2024-03-02", conn, cursor)
-    predictions, pred_true = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
-    print(f'predictions: {predictions}')
-    print(f'pred_true: {pred_true}')
-    
     # start Fast API
     uvicorn.run("main:app", port=8001, reload=False)
 
-    
+    # **********
+    # TEST predictions, pred_true = generate_predictions("2024-03-02", conn, cursor)
+    # predictions, pred_true = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
+    # print(f'predictions: {predictions}')
+    # print(f'pred_true: {pred_true}')

@@ -11,7 +11,7 @@ import sqlite3
 import sys
 import os
 from datetime import datetime
-
+import logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 import commun
@@ -21,12 +21,14 @@ def create_db_connection():
     print(40*'_')
     print()
     print("Creating connection...")
+    logging.info("Creating connection...")
     global conn, cursor
     # Connect to SQLLITE database
     conn = sqlite3.connect('weather.db')
     cursor = conn.cursor()
     
     print("Connection created successfully")
+    logging.info("Connection created successfully")
     return conn, cursor
 
 
@@ -34,6 +36,7 @@ def get_data(url, params, column_names):
     print(40*'_')
     print()
     print("Getting data from Open Meteo API Client...")
+    logging.info("Getting data from Open Meteo API Client...")
     # Setup the Open-Meteo API client with cache and retry on error
     cache_session = requests_cache.CachedSession('.cache', expire_after = -1)
     retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
@@ -78,6 +81,7 @@ def save_to_db(df, db_name, conn, cursor):
     print()
     df = df.copy()
     print(f'Saving to database {db_name}...')
+    logging.info(f'Saving to database {db_name}...')
     
     if db_name == "averages":
         df.to_sql(name=db_name, # Name of SQL Table
@@ -122,6 +126,7 @@ def refresh_database(conn, cursor):
     print(40*'_')
     print()
     print("Refreshing database...")
+    logging.info("Refreshing database...")
     date = datetime.now()
     
     params = commun.weather_params
@@ -151,6 +156,7 @@ def retrieve_training_data(conn,cursor):
     print(40*'_')
     print()
     print(f'Retrieving training data...')
+    logging.info(f'Retrieving training data...')
     # Query to retrieve all data from the training database
     query = "SELECT * FROM training"
     
@@ -171,6 +177,7 @@ def retrieve_true_labels_for_date(date, conn, cursor):
     print(40*'_')
     print()
     print("Retrieving True Labels...")
+    logging.info("Retrieving True Labels...")
     
     print(f"date: {date}")
     
@@ -190,6 +197,7 @@ def retrieve_true_labels_for_dates(dates, conn, cursor):
     print(40 * '_')
     print()
     print("Retrieving True Labels...")
+    logging.info("Retrieving True Labels...")
     
     true_labels = []
     for date in dates:
@@ -212,6 +220,7 @@ def retrieve_true_labels_for_dates(dates, conn, cursor):
 def get_training_averages_from_db(av_names, conn, cursor):
     print()
     print("Get training averages from db...")
+    logging.info("Get training averages from db...")
     all_averages = {}
     
     for av in av_names : 
@@ -277,6 +286,7 @@ def retrieve_all_from_db_name(db_name, conn, cursor):
     print(40*'_')
     print()
     print(f'Retrieving all data from {db_name}...')
+    logging.info(f'Retrieving all data from {db_name}...')
     
     if not table_exists(db_name, cursor):
         print(f"Table '{db_name}' does not exist.")

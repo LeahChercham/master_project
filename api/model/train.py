@@ -7,6 +7,8 @@ from api.data.db_functions import retrieve_training_data, save_to_db, get_traini
 import pickle
 import os
 import commun 
+import logging 
+
 # Preprocessing functions
 
 def get_season(df):
@@ -224,15 +226,18 @@ def fit_model(X_train, y_train):
     # Check if the model file already exists
     if os.path.exists(model_filename):
         print("Model already exists. Skipping model creation and training.")
+        logging.info("Model already exists. Skipping model creation and training.")
         return None
     
 
     print("Creating model ...")
+    logging.info("Creating model ...")
     # Define and train the model
     lr = LinearRegression()
     
     print()
     print('Training model ...')
+    logging.info('Training model ...')
     lr.fit(X_train, y_train)
     
     # TODO : this works but prefere working with pickle
@@ -251,5 +256,6 @@ def fit_model(X_train, y_train):
         
     print()
     print("Model saved pickle serialized")
+    logging.info("Model saved pickle serialized")
     
     return lr

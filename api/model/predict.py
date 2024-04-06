@@ -40,6 +40,7 @@ def generate_period_predictions(start_date, end_date, conn, cursor):
     print(40*'_')
     print()
     print("Preparing Data for predictions ... ")
+    logging.info("Preparing Data for predictions ... ")
     
     # logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
     # loaded_model = get_model(logged_model)
@@ -70,6 +71,7 @@ def generate_period_predictions(start_date, end_date, conn, cursor):
     print(40*'_')
     print()
     print("Predicting ... ")
+    logging.info("Predicting ... ")
     # output a list of predictions (hours from 0 to 24 in 3h steps)
     predictions = loaded_model.predict(preprocessed_df) # Array of temperatures    
     true_labels = retrieve_true_labels_for_dates(date_range, conn, cursor) # Returns an array of tupples (date_time, temperature)
@@ -116,6 +118,7 @@ def generate_predictions(input_data, conn, cursor):
     print(40*'_')
     print()
     print("Preparing Data for predictions ... ")
+    logging.info("Preparing Data for predictions ... ")
     
     # logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
     # loaded_model = get_model(logged_model)
@@ -146,6 +149,7 @@ def generate_predictions(input_data, conn, cursor):
     print(40*'_')
     print()
     print("Predicting ... ")
+    logging.info("Predicting ... ")
     # output a list of predictions (hours from 0 to 24 in 3h steps)
     predictions = loaded_model.predict(preprocessed_df) # Array of temperatures
 
