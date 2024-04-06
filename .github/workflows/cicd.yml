@@ -49,22 +49,10 @@ jobs:
         load: true
         tags: ${{needs.versioning.outputs.imageName}}
 
-    - name: Run Docker Image for Test
+    - name: Run Docker Image and API Tests
       run: |
         docker run --rm -p 8001:8001 ${{needs.versioning.outputs.imageName}} python ./api/tests/test_api.py
         
-    # # Run the API tests against the running Docker container
-    # - name: Run API tests
-    #   run: |
-    #     echo "## 🧪 Running API tests" >> $GITHUB_STEP_SUMMARY
-    #     python  ./api/tests/test_api.py
-
-    # Cleanup: Stop and remove the Docker container
-    - name: Stop and remove Docker container
-      run: |
-        docker stop ${{needs.versioning.outputs.imageName}}
-        docker rm ${{needs.versioning.outputs.imageName}}
-
   push-image:
     runs-on: ubuntu-latest
     permissions:
