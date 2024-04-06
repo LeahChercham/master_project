@@ -51,7 +51,7 @@ jobs:
     
     steps:
     - name: Run Docker
-      run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}}
+      run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}} .
       id: docker-container
 
     # Wait a few seconds for the image to start
