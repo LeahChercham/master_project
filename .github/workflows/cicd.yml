@@ -56,6 +56,12 @@ jobs:
     needs: [versioning, build-export-image]
     
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Login 
+      run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u "${{github.actor}}" --password-stdin
+  
     - name: Run Docker
       run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}}_test .
       id: docker-container
