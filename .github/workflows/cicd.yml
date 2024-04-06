@@ -74,30 +74,4 @@ jobs:
         context: .
         push: true
         tags: ${{needs.versioning.outputs.imageName}}
-  
-  # build-and-push:
-  #   runs-on: ubuntu-latest
-  #   permissions:
-  #     contents: read
-  #     packages: write
-
-  #   needs: [versioning]
-    
-  #   steps:
-  #   - name: Checkout code
-  #     uses: actions/checkout@v4
-      
-  #   - name: Login 
-  #     run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u "${{github.actor}}" --password-stdin
-
-  #   - name: Build and Push Docker Image
-  #     uses: docker/build-push-action@v2
-  #     with:
-  #       context: .
-  #       push: true
-  #       tags: ${{needs.versioning.outputs.imageName}}
-  #     # build-args: |
-  #     #   #   VERSION=${{needs.versioning.outputs.version}}
-  #     #   # context: .
-  #     #   push: true
-  #     #   tags: ${{needs.versioning.outputs.imageName}}
+ 

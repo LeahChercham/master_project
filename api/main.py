@@ -19,6 +19,7 @@ from data.db_functions import refresh_database, create_db_connection
 from api.model.train import fit_model, prepare_training_data
 
 from api.model.predict import generate_predictions, generate_period_predictions
+from api.monitoring.monitoring import plot_true_pred
 
 import logging
 from commun import sw_version, weather_params
@@ -68,7 +69,7 @@ def get_combined_predictions(start_date: date, end_date: date):
     try:
         conn, cursor = create_db_connection()
         # Retrieve combined predictions and observed data for the specified period
-        predictions, pred_true = generate_period_predictions(start_date,end_date, conn, cursor)
+        predictions, pred_true, true_labels_df = generate_period_predictions(start_date,end_date, conn, cursor)
         
         return {"predictions and true labels": pred_true}
     
@@ -114,11 +115,9 @@ if __name__ == "__main__":
     # create and fit the model
     model = fit_model(X, y)
     
+    #TEST PLOT
+    predictions, pred_true, true_labels_df = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
+    print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
+    
     # start Fast API
     uvicorn.run("main:app", port=8001, reload=False)
-
-    # **********
-    # TEST predictions, pred_true = generate_predictions("2024-03-02", conn, cursor)
-    # predictions, pred_true = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
-    # print(f'predictions: {predictions}')
-    # print(f'pred_true: {pred_true}')

@@ -10,7 +10,7 @@ from retry_requests import retry
 import sqlite3
 import sys
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import logging
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -129,10 +129,12 @@ def refresh_database(conn, cursor):
     logging.info("Refreshing database...")
     date = datetime.now()
     
+    # Subtract one day from the current date
+    date_minus_one_day = date - timedelta(days=1)
     params = commun.weather_params
 
     # date to only date (without time)
-    date_only = date.date()
+    date_only = date_minus_one_day.date()
     params["end_date"] = str(date_only)
     
     df = get_data(commun.weather_url, params, ["temperature_2m"])

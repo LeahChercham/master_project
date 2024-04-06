@@ -36,6 +36,11 @@ pip install -r requirements.txt
 python .\api\data\data.py
 
 ```
+## Using the docker image 
+### Download ? the docker image TODO
+
+## Test locally with: TODO
+        docker run --rm -p 8001:8001 ${{needs.versioning.outputs.imageName}} python ./api/tests/test_api.py
 
 
 # CI/CD steps

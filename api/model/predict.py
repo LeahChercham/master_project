@@ -95,8 +95,8 @@ def generate_period_predictions(start_date, end_date, conn, cursor):
     save_to_db(pred_true_preprocessed_df, "predictions", conn, cursor)
     
     pred_true = pd.concat([predictions_series, true_labels_series], axis=1)
-
-    return predictions, pred_true
+    true_labels_df = pd.DataFrame(true_labels_series)
+    return predictions, pred_true, true_labels_df
 
 
 
