@@ -9,6 +9,7 @@ from api.model.train import preprocessing
 import pickle
 import commun
 import mlflow
+import logging 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from api.data.db_functions import retrieve_all_from_db_name, retrieve_true_labels_for_date, retrieve_true_labels_for_dates, save_to_db

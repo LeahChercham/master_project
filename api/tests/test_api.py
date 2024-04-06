@@ -1,6 +1,10 @@
 import unittest
 from fastapi.testclient import TestClient
-from main import app  # Assuming your FastAPI app instance is named 'app'
+
+import sys
+sys.path.insert(0, './api')  # Replace with the actual path to the parent directory of api
+
+from main import app 
 
 # Create a test client using FastAPI's TestClient
 client = TestClient(app)
@@ -20,12 +24,11 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("predictions", response.json())
         
-    def test_predictions_endpoint(self):
+    def test_combined_predictions_endpoint(self):
         # Test the version endpoint "/combined_predictions/{start_date}/{end_date}/"
-        response = client.get("/predictions/2024-01-05/2024-01-10")
+        response = client.get("/combined_predictions/2024-01-05/2024-01-10")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("predictions", response.json())
-        self.assertIn("true", response.json())
+        self.assertIn("predictions and true labels", response.json())
 
 
 if __name__ == '__main__':
