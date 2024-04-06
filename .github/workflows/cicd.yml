@@ -17,7 +17,7 @@ jobs:
         id: versioning
         run: |
           version=$(git rev-parse --short HEAD)
-          imageName=ghcr.io/${{github.repository}}:$version
+          imageName=ghcr.io/master_projet_chercham:$version
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "imageName=$imageName" >> $GITHUB_OUTPUT
           echo "the image name :'$imageName'"
