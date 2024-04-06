@@ -48,6 +48,10 @@ jobs:
         load: true
         tags: ${{needs.versioning.outputs.imageName}}_test
 
+    - name: Run Docker Image for Test
+      run: |
+        docker run --rm --detach -p 8001:8001 ${{needs.versioning.outputs.imageName}}_test
+
   api-tests:
     runs-on: ubuntu-latest
     permissions:
