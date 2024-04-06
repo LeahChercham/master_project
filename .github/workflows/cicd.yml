@@ -76,7 +76,7 @@ jobs:
       contents: read
       packages: write
 
-   needs: [versioning, build-image, api-tests]
+    needs: [versioning, build-image, api-tests]
 
     steps:
     - name: Checkout code
