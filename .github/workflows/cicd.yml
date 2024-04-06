@@ -17,7 +17,9 @@ jobs:
         id: versioning
         run: |
           version=$(git rev-parse --short HEAD)
-          imageName=ghcr.io/${{github.repository}}:$version
+          # Convert repository name to lowercase
+          repository_lowercase=$(echo "${{ github.repository }}" | tr '[:upper:]' '[:lower:]')
+          imageName=ghcr.io/${repository_lowercase}:$version
           echo "version=$version" >> $GITHUB_OUTPUT
           echo "imageName=$imageName" >> $GITHUB_OUTPUT
           echo "the image name :'$imageName'"
