@@ -48,7 +48,8 @@ jobs:
   api-tests:
     runs-on: ubuntu-latest
     needs: [versioning, build-image]
-
+    
+    steps:
     - name: Run Docker
       run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}}
       id: docker-container
