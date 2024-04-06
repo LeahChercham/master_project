@@ -50,6 +50,9 @@ jobs:
 
   api-tests:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     needs: [versioning, build-export-image]
     
     steps:
