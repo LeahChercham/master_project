@@ -51,6 +51,16 @@ jobs:
     - name: Run Docker Image for Test
       run: |
         docker run --rm --detach -p 8001:8001 ${{needs.versioning.outputs.imageName}}_test
+        
+    # Wait a few seconds for the image to start
+    - name: Wait for image to start
+      run: sleep 30
+    
+    # Run the API tests against the running Docker container
+    - name: Run API tests
+      run: |
+        echo "## 🧪 Running API tests" >> $GITHUB_STEP_SUMMARY
+        python  ./api/tests/test_api.py
 
   api-tests:
     runs-on: ubuntu-latest
