@@ -20,6 +20,7 @@ from api.model.predict import generate_predictions, get_combined_data
 
 app = FastAPI()
 
+
 class DataForm(BaseModel):
     selected_date: date = Field(description="Select a date")
 
@@ -48,8 +49,9 @@ def get_predictions(date: date):
     print(f'date: {date}')
     
     try:
+        conn, cursor = create_db_connection()
         # Retrieve predictions for the specified date
-        predictions = generate_predictions(date)
+        predictions = generate_predictions(date, conn, cursor)
         
         return {"predictions": predictions}
     
@@ -91,12 +93,9 @@ if __name__ == "__main__":
     model = fit_model(X, y)
     
     predictions = generate_predictions("2024-03-02", conn, cursor)
+    print(f'predictions: {predictions}')
     
     # start Fast API
-    # uvicorn.run("main:app", port=8000, reload=True)
-    
-    
-    print("printing test")
-    # at the end, close connection  TODO
-    # conn.close()
+    uvicorn.run("main:app", port=8000, reload=True)
+
     

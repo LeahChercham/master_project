@@ -68,7 +68,7 @@ def get_data(url, params, column_names):
 
     # Resample the DataFrame to 3-hour intervals and calculate mean
     df_resampled = df.resample('3h').mean()
-    print(f'Data head(1) : {df_resampled.head(1)}')
+
     return df_resampled
 
 
@@ -84,6 +84,21 @@ def save_to_db(df, db_name, conn, cursor):
             con=conn, # sqlite3.Connection
             if_exists='replace',  # drop the table before inserting new values. Means that i get all the data at all times
             )
+    elif db_name == "predictions":
+        if not table_exists(db_name, cursor):
+            df.to_sql(name=db_name, # Name of SQL Table
+                con=conn, # sqlite3.Connection
+                if_exists='replace',
+                index=True, # DF index is date_time
+                index_label="date_time"  
+                )
+        else:
+            df.to_sql(name=db_name, # Name of SQL Table
+                con=conn, # sqlite3.Connection
+                if_exists='append',
+                index=True, # DF index is date_time
+                index_label="date_time"  
+                )
     else:
         df.to_sql(name=db_name, # Name of SQL Table
                 con=conn, # sqlite3.Connection
@@ -156,45 +171,20 @@ def retrieve_true_labels_for_date(date, conn, cursor):
     print(40*'_')
     print()
     print("Retrieving True Labels...")
-    day = date.day
-    month = date.month
-    year = date.year
     
-    query = f"SELECT * FROM weather WHERE strftime('%d', date_time) = ? AND strftime('%m', date_time) = ? AND strftime('%Y', date_time) = ?"
+    print(f"date: {date}")
+    
+    date_str = date.strftime('%Y-%m-%d')
+    query = f"SELECT * FROM weather WHERE DATE(date_time) = ?"
     
     # Execute the query with the parameters
-    cursor.execute(query, (day, month, year))
+    cursor.execute(query, (date_str,))
     
     # Fetch the results
     true_labels = cursor.fetchall()
     print(f"true labels: {true_labels}")
     return true_labels
 
-
-def save_predictions(date_time_array, predictions, true_labels, model_name, conn, cursor):
-    # in db predictions
-    print(40*'_')
-    print()
-    print("Saving predictions...")
-    try:
-        # Create a table to store predictions if it doesn't exist
-        cursor.execute('''CREATE TABLE IF NOT EXISTS predictions (
-                            id INTEGER PRIMARY KEY,
-                            input_date DATETIME,
-                            model_name TEXT,
-                            prediction REAL,
-                            true_label REAL
-                          )''')
-        
-        # Insert predictions and true labels into the database
-        for date_time, pred, true_label in zip(date_time_array, predictions, true_labels):
-            cursor.execute('''INSERT INTO predictions (input_date, model_name, prediction, true_label)
-                              VALUES (?, ?, ?)''', (date_time, model_name, pred, true_label))
-                
-        conn.commit()
-        return "Predictions saved successfully"
-    except Exception as e:
-        return f'error: {e}'
     
 
 def get_training_averages_from_db(av_names, conn, cursor):
@@ -257,3 +247,30 @@ def get_training_data_for_date_minus_one_year(date, conn, cursor): # Works
     print(f'Getting training data minus one year: {training_data_df}')
     return training_data_df
     
+
+def table_exists(table_name, cursor):
+    cursor.execute(f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table_name}'")
+    return cursor.fetchone() is not None
+
+
+def retrieve_all_from_db_name(db_name, conn, cursor):
+    print(40*'_')
+    print()
+    print(f'Retrieving all data from {db_name}...')
+    
+    if not table_exists(db_name, cursor):
+        print(f"Table '{db_name}' does not exist.")
+        return False
+    
+    query = f'SELECT * from {db_name}'
+    
+    # Execute the query
+    cursor.execute(query)
+    
+    # Fetch all rows from the query result
+    rows = cursor.fetchall()
+    
+    # Convert the rows to a DataFrame
+    columns = [desc[0] for desc in cursor.description]
+    df = pd.DataFrame(rows, columns=columns)
+    return df

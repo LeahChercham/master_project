@@ -68,8 +68,6 @@ def create_year_lags(df, training = True, conn=None, cursor=None):
         # Retrieve training data for the date minus one year
         training_data = get_training_data_for_date_minus_one_year(df.index[0], conn, cursor)
         df[f'year_lag_{lag_distance_year}'] = training_data[f'temperature_2m'].values
-
-    print(f'df with lag: {df}')
     
     return df
 
@@ -177,9 +175,6 @@ def preprocessing(df, training=True, conn=None, cursor=None):
         y = None
         X.set_index('date_time', inplace=True)
         
-
-    print(40*'*')
-    print(f'preprocessed X: {X}')
     return X, y
     
 
