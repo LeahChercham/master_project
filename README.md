@@ -1,4 +1,13 @@
-# < Project name >
+# BIHAR MASTER II PROJET FINAL
+## Description
+This project is the final project for master II BIHAR Big Data and AI at Estia (bidart).  
+
+The project is composed of three sub projects:
+- Image classification
+- Text classification
+- Time series predictions
+
+
 High-level description
 
 Data flow & architecture
@@ -18,7 +27,9 @@ pip install -r requirements.txt
 
 ```
 
-## Testing the sqlite database setup
+## Running the application locally
+- Navigate to project root
+- Execute following command:
 
 ```bash
 
@@ -28,12 +39,20 @@ python .\api\data\data.py
 
 
 # CI/CD steps
+
+## Build docker image 
+- Navigate to project root
+- Execute following command:
+```bash
+docker build -t image
+docker run -p 8001:8001 image
+``` 
+
 Short description of each step with their outputs (if any)
 
 See example here: https://github.com/estia-bihar/correction
 
 # TODOs
-- finish model on notebook
 - add other projects notebooks to this github
 - add models to sqlite database
 - write fastapi code

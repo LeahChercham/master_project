@@ -250,7 +250,6 @@ def get_training_data_for_date_minus_one_year(date, conn, cursor): # Works
 
     # Convert date to strings in the format 'YYYY-MM-DD'
     one_year_ago_str = one_year_ago.strftime('%Y-%m-%d')
-    print(f'one year ago str : {one_year_ago_str}')
 
     # Construct and execute the SQL query to retrieve training data for the specified date minus one year
     query = f"""
@@ -266,7 +265,6 @@ def get_training_data_for_date_minus_one_year(date, conn, cursor): # Works
     columns = [desc[0] for desc in cursor.description]
     training_data_df = pd.DataFrame(rows, columns=columns)
     
-    print(f'Getting training data minus one year: {training_data_df}')
     return training_data_df
     
 

@@ -6,16 +6,24 @@ import sys
 import os
 from sklearn.metrics import mean_squared_error
 from api.model.train import preprocessing
+import pickle
 import commun
 import mlflow
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
 from api.data.db_functions import retrieve_all_from_db_name, retrieve_true_labels_for_date, retrieve_true_labels_for_dates, save_to_db
 
-def get_model(path):
+# def get_model(path):
 
-    # Load model as a PyFuncModel.
-    loaded_model = mlflow.pyfunc.load_model(path)
+#     # Load model as a PyFuncModel.
+#     loaded_model = mlflow.pyfunc.load_model(path)
+#     return loaded_model
+
+
+def get_model(path="api/model/serialized_model/linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False.pkl"):
+    # Load the model from the specified path using pickle
+    with open(path, 'rb') as file:
+        loaded_model = pickle.load(file)
     return loaded_model
 
 def generate_date_range(start_date, end_date):
@@ -28,19 +36,15 @@ def generate_date_range(start_date, end_date):
     return date_range
 
 
-        
-
-
-
-
-
 def generate_period_predictions(start_date, end_date, conn, cursor): 
     print(40*'_')
     print()
     print("Preparing Data for predictions ... ")
     
-    logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
-    loaded_model = get_model(logged_model)
+    # logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
+    # loaded_model = get_model(logged_model)
+    
+    loaded_model = get_model()
     
     start_data = str(start_date)
     start_date_object = datetime.fromisoformat(start_data)
@@ -113,8 +117,9 @@ def generate_predictions(input_data, conn, cursor):
     print()
     print("Preparing Data for predictions ... ")
     
-    logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
-    loaded_model = get_model(logged_model)
+    # logged_model = 'runs:/d023dbaf57af4cd3a6939de1c32c9695/model'
+    # loaded_model = get_model(logged_model)
+    loaded_model = get_model()
 
     input_data = str(input_data)
     date_object = datetime.fromisoformat(input_data)

@@ -4,7 +4,8 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import MinMaxScaler
 from api.data.db_functions import retrieve_training_data, save_to_db, get_training_averages_from_db, get_training_data_for_date_minus_one_year
-
+import pickle
+import os
 import commun 
 # Preprocessing functions
 
@@ -213,9 +214,19 @@ def prepare_training_data(conn,cursor):
 def fit_model(X_train, y_train):
     ''' This function is creating and fitting a linear regression model
     Model to create: linear_regression_X_train__lags_False__yearlag_True__aggregates_True__exo_False '''
-    model_name = commun.model_name
     print(40*'_')
     print()
+    
+    model_name = commun.model_name
+    directory = "api/model/serialized_model"
+    model_filename = os.path.join(directory, f"{model_name}.pkl")
+    
+    # Check if the model file already exists
+    if os.path.exists(model_filename):
+        print("Model already exists. Skipping model creation and training.")
+        return None
+    
+
     print("Creating model ...")
     # Define and train the model
     lr = LinearRegression()
@@ -223,15 +234,22 @@ def fit_model(X_train, y_train):
     print()
     print('Training model ...')
     lr.fit(X_train, y_train)
-        
-    with mlflow.start_run(run_name=model_name) as run:
-        mlflow.log_param("model", model_name)
-        mlflow.sklearn.log_model(sk_model=lr,  artifact_path="model")
     
-    # Register the model using the run ID
-    mlflow.register_model(f"models", model_name)
-
+    # TODO : this works but prefere working with pickle
+    # with mlflow.start_run(run_name=model_name) as run:
+    #     mlflow.log_param("model", model_name)
+    #     mlflow.sklearn.log_model(sk_model=lr,  artifact_path="model")
+    
+    # # Register the model using the run ID
+    # mlflow.register_model(f"models", model_name)
+    
+    # print()
+    # print("Model saved to MLflow Registry")
+    
+    with open(model_filename, 'wb') as file:
+        pickle.dump(lr, file)
+        
     print()
-    print("Model saved to MLflow Registry")
+    print("Model saved pickle serialized")
     
     return lr

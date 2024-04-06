@@ -4,6 +4,7 @@ Ce script doit contenir l'implémentation des endpoints pour les fonctionnalité
 - Récupération des prédictions pour une date donnée,
 - Récupération des prédictions combinées avec des données réelles observées pour une période donnée
 """
+import sqlite3
 from fastapi import FastAPI, HTTPException, Query
 from datetime import date, datetime
 from typing import Optional, List
@@ -20,6 +21,8 @@ from api.model.predict import generate_predictions, generate_period_predictions
 
 app = FastAPI()
 
+conn = sqlite3.connect('weather.db')
+cursor = conn.cursor()
 
 class DataForm(BaseModel):
     selected_date: date = Field(description="Select a date")
@@ -46,15 +49,16 @@ def get_predictions(date: date):
         raise HTTPException(status_code=500, detail=str(e)) # prepare exceptions TODO
 
 # Define endpoint for retrieving predictions combined with observed data for a specific period
-@app.get("/combined_predictions/")
-def get_combined_predictions(start_date: str, end_date: str):
+@app.get("/combined_predictions/{start_date}/{end_date}/")
+def get_combined_predictions(start_date: date, end_date: date):
+    print(f'start_date and end_date : {start_date} , {end_date}')
     try:
         conn, cursor = create_db_connection()
-        
+        print(f' conn: {conn}')
         # Retrieve combined predictions and observed data for the specified period
         predictions, pred_true = generate_period_predictions(start_date,end_date, conn, cursor)
         
-        return {"combined_data": pred_true}
+        return {"predictions and true labels": pred_true}
     
     except Exception as e:
         # Return error message if any exception occurs
@@ -86,6 +90,6 @@ if __name__ == "__main__":
     print(f'pred_true: {pred_true}')
     
     # start Fast API
-    # uvicorn.run("main:app", port=8000, reload=True)
+    uvicorn.run("main:app", port=8001, reload=False)
 
     
