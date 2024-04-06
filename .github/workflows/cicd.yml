@@ -26,7 +26,7 @@ jobs:
           echo "## 🔖 New version '$version'" >> $GITHUB_STEP_SUMMARY
           echo "## 📦 Image '$imageName'" >> $GITHUB_STEP_SUMMARY
 
-  build-image: 
+  build-export-image: 
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -41,17 +41,20 @@ jobs:
     - name: Login 
       run: echo "${{secrets.GITHUB_TOKEN}}" | docker login ghcr.io -u "${{github.actor}}" --password-stdin
 
-    - name: Build Docker Image
-      run: docker build ${{needs.versioning.outputs.imageName}} .
-
+    - name: Build Docker Image and Export to Docker
+      uses: docker/build-push-action@v5
+      with: 
+        context: .
+        load: true
+        tags: ${{needs.versioning.outputs.imageName}}_test
 
   api-tests:
     runs-on: ubuntu-latest
-    needs: [versioning, build-image]
+    needs: [versioning, build-export-image]
     
     steps:
     - name: Run Docker
-      run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}} .
+      run: docker run -d -p 8001:8001 ${{needs.versioning.outputs.imageName}}_test .
       id: docker-container
 
     # Wait a few seconds for the image to start
@@ -76,7 +79,7 @@ jobs:
       contents: read
       packages: write
 
-    needs: [versioning, build-image, api-tests]
+    needs: [versioning, build-export-image, api-tests]
 
     steps:
     - name: Checkout code
