@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . /code
 
-EXPOSE 8001
+EXPOSE 8000
 
 CMD ["python", "./api/main.py"]
 # CMD ["uvicorn", "api.main:app", "--port", "8001"]

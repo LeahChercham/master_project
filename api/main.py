@@ -31,31 +31,32 @@ conn = sqlite3.connect('weather.db')
 cursor = conn.cursor()
 
 
-# @asynccontextmanager
-# async def lifespan(app: FastAPI):
-#     logging.info(f'Starting fast API')
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    logging.info(f'Starting fast API')
 
-#     # Create database connection 
-#     conn, cursor = create_db_connection()
+    # Create database connection 
+    conn, cursor = create_db_connection()
     
-#     # refresh database with data up to date and training da
-#     print(refresh_database(conn,cursor))
+    # refresh database with data up to date and training da
+    print(refresh_database(conn,cursor))
     
-#     # use data until 12/2023 as training data and preprocess it
-#     X, y = prepare_training_data(conn, cursor)
+    # use data until 12/2023 as training data and preprocess it
+    X, y = prepare_training_data(conn, cursor)
         
-#     # create and fit the model
-#     model = fit_model(X, y)
+    # create and fit the model
+    model = fit_model(X, y)
     
-#     # #TESTS
-#     # predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
-#     # predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)
-#     # print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
-#     yield
-#     logging.info("Ending fast API")
+    #TESTS
+    predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
+    predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)
+    print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
+    
+    yield
+    logging.info("Ending fast API")
 
-# app = FastAPI(lifespan=lifespan)
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
+# app = FastAPI()
 
 
 class DataForm(BaseModel):
@@ -118,25 +119,24 @@ def version():
         return {"error": "An error occurred while processing the request"}, 500
     
     
-def run_uvicorn():
-    print("Running uvicorn")
-    uvicorn.run(app, port=8001, reload=False)
+
 
 if __name__ == "__main__":
-    # Create database connection 
-    conn, cursor = create_db_connection()
+    # # Create database connection 
+    # conn, cursor = create_db_connection()
     
-    # refresh database with data up to date and training da
-    print(refresh_database(conn,cursor))
+    # # refresh database with data up to date and training da
+    # print(refresh_database(conn,cursor))
     
-    # use data until 12/2023 as training data and preprocess it
-    X, y = prepare_training_data(conn, cursor)
+    # # use data until 12/2023 as training data and preprocess it
+    # X, y = prepare_training_data(conn, cursor)
         
-    # create and fit the model
-    model = fit_model(X, y)    
+    # # create and fit the model
+    # model = fit_model(X, y)    
     
-
-    run_uvicorn()
+    # print("Running uvicorn")
+    uvicorn.run(app, port=8000, host="0.0.0.0", reload=False)
+    
     # #TESTS
     # predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
     # predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)

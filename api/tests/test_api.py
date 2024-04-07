@@ -29,6 +29,9 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("predictions and true labels if they are", response.json())
         data = response.json()["predictions and true labels if they are"]
+        expected_keys = ["predictions"] # can not check for true labels as there are none if the prediction is for a date in the future
+        for key in expected_keys: 
+            self.assertIn(key, data)
         self.assertGreaterEqual(len(data),1)
         
     def test_combined_predictions_endpoint(self):
@@ -37,6 +40,10 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("predictions and true labels if they are", response.json())
         data = response.json()["predictions and true labels if they are"]
+        self.assertGreaterEqual(len(data),1)
+        expected_keys = ["predictions"] # can not check for true labels as there are none if the prediction is for a date in the future
+        for key in expected_keys: 
+            self.assertIn(key, data)
         self.assertGreaterEqual(len(data),1)
 
 
