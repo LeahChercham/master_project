@@ -4,6 +4,7 @@ Ce script doit contenir l'implémentation des endpoints pour les fonctionnalité
 - Récupération des prédictions pour une date donnée,
 - Récupération des prédictions combinées avec des données réelles observées pour une période donnée
 """
+from contextlib import asynccontextmanager
 import sqlite3
 from fastapi import FastAPI, HTTPException, Query
 from datetime import date, datetime
@@ -26,12 +27,36 @@ from commun import sw_version, weather_params
 
 # Set up logging configuration
 logging.basicConfig(filename='api.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-
-
-app = FastAPI()
-
 conn = sqlite3.connect('weather.db')
 cursor = conn.cursor()
+
+
+# @asynccontextmanager
+# async def lifespan(app: FastAPI):
+#     logging.info(f'Starting fast API')
+
+#     # Create database connection 
+#     conn, cursor = create_db_connection()
+    
+#     # refresh database with data up to date and training da
+#     print(refresh_database(conn,cursor))
+    
+#     # use data until 12/2023 as training data and preprocess it
+#     X, y = prepare_training_data(conn, cursor)
+        
+#     # create and fit the model
+#     model = fit_model(X, y)
+    
+#     # #TESTS
+#     # predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
+#     # predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)
+#     # print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
+#     yield
+#     logging.info("Ending fast API")
+
+# app = FastAPI(lifespan=lifespan)
+app = FastAPI()
+
 
 class DataForm(BaseModel):
     selected_date: date = Field(description="Select a date")
@@ -91,11 +116,13 @@ def version():
     except Exception as e:
         logging.error(f"Error occurred while processing version request: {str(e)}")
         return {"error": "An error occurred while processing the request"}, 500
+    
+    
+def run_uvicorn():
+    print("Running uvicorn")
+    uvicorn.run(app, port=8001, reload=False)
 
 if __name__ == "__main__":
-    
-    logging.info(f'Running api/main.py')
-
     # Create database connection 
     conn, cursor = create_db_connection()
     
@@ -104,14 +131,15 @@ if __name__ == "__main__":
     
     # use data until 12/2023 as training data and preprocess it
     X, y = prepare_training_data(conn, cursor)
-    
+        
     # create and fit the model
-    model = fit_model(X, y)
+    model = fit_model(X, y)    
     
+
+    run_uvicorn()
     # #TESTS
     # predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
     # predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)
     # print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
-    
     # start Fast API
-    uvicorn.run("main:app", port=8001, reload=False)
+    # uvicorn.run(app, port=8001, reload=False)

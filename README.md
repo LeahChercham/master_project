@@ -7,7 +7,7 @@ The project is composed of three sub projects:
 - Time series predictions
   
 The notebooks for these subprojects can be found in the folder notebooks.
-This readme concerns the Time Series predictions application, as we created an api for this. 
+This readme concerns the **time series (temperature) predictions application**, as we created an api for this. 
 
 # Description
 
@@ -40,10 +40,29 @@ In the root of the repository you can find also the Dockerfile used to create a 
 # Endpoints
 ## Documentation
 
-Expected were four endpoints: generate prediction for a specific date, get predictions for a specific date, get predictions and true labels for a date range, get version of software and data
+Expected were four endpoints: generate prediction for a specific date, get predictions for a specific date, get predictions and true labels for a date range, get version of software and data.  
+I decided to group generate prediction for a specific date and get predictions for a specific date. 
 
-## Logging
-The logging is done regularly
+### Generate and get prediction for a specific date, GET /prediction/{date}/
+This endpoint takes a paramater date which has to be of format string "YYYY-MM-DD". 
+It sends back the mean temperature prediction for that specific date at 0, 3, 6, 9 , 12, 15, 18, 21 hours.  
+It sends also back, if date is before today-1 the true mean temperature for those time stamps.  
+If the date is in the future, it only sends back the predictions.
+
+### Get version of software and data, GET /version/
+This endpoint doesn't take any parameter and sends back the version specified in the config.ini file, as well as the params used to get the weather data.
+
+### Generate and get prediction for a period, GET /combined_predictions/{start_date}/{end_date}
+This endpoint takes two paramaters start_date and end_date which both  to be of format string "YYYY-MM-DD". have
+It sends back the mean temperature prediction for the dates of the range between start and end_date for the hours 0, 3, 6, 9 , 12, 15, 18, 21 of those dates.  
+It sends also back, if the range is before today-1 the true mean temperature for those time stamps.  
+If the date is in the future, it only sends back the predictions.
+
+### Endpoint tests
+The endpoint tests are defined in the file tests/test_api.py. Those are executed before pushing the new docker image to ghcr.io
+
+# Logging
+The logging is done regularly using the logging librairie from python. The log file is api.log
 
 # Running the App 
 Instructions to install dependencies, run the app, build the docker image, test the api.
@@ -125,22 +144,3 @@ Then  we run the image and once it is running we run the api test script.
 ### push-image
 This job is pushing the image to ghcr.io. We use the docker build and push action and use the image Name defined in versioning. This is only executed after versioning and build-test-image.
 
-
-
-
-
-
-
-
-
-# TODOs
-- add other projects notebooks to this github
-- add models to sqlite database
-- write fastapi code
-- dockerfile: démarrer et servir les endpoints de l'API / les couches sont optimisées pour ne pas réinstaller les dépendances lorsque le code change / La documentation sur la facon de générer l'image et l'architecture est fournie
-- logging dans fichier
-- tests automatisés des endpoints de l'API
-- pipeline basé sur GH actions qui créé une image, lenvoie vers ghcr.io et exécute des tests de l'API
-
-# Last working on: 
-In /api: **main**, commun and train (do the functions of main next)
