@@ -37,7 +37,7 @@ class TestAPI(unittest.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("predictions and true labels if they are", response.json())
         data = response.json()["predictions and true labels if they are"]
-        self.assertGreaterEq(len(data),1)
+        self.assertGreaterEqual(len(data),1)
 
 
 if __name__ == '__main__':
