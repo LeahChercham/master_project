@@ -19,7 +19,7 @@ class TestAPI(unittest.TestCase):
         self.assertIn("data_version", response.json())
         # Check if the keys are present in the data_version object
         data_version = response.json()["data_version"]
-        expected_keys = ["latitude", "longitude", "start_date", "end_date"]
+        expected_keys = ["latituude", "longitude", "start_date", "end_date"]
         for key in expected_keys:
             self.assertIn(key, data_version)
         
@@ -50,22 +50,3 @@ class TestAPI(unittest.TestCase):
 if __name__ == '__main__':
     unittest.main()
 
-
-
-# unit-tests:
-#   runs-on: ubuntu-latest
-
-#   steps:
-#     - name: Checkout code
-#       uses: actions/checkout@v2
-
-#     - name: Set up Python
-#       uses: actions/setup-python@v2
-#       with:
-#         python-version: '3.12'
-
-#     - name: Install dependencies
-#       run: pip install -r requirements.txt
-
-#     - name: Run unit tests
-#       run: python -m unittest discover -s tests -p 'test_*.py'

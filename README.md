@@ -2,9 +2,9 @@
 This project is the final project for master II BIHAR Big Data and AI at Estia (bidart).  
 
 The project is composed of three sub projects:
-- Image classification
-- Text classification
-- Time series predictions
+- Image classification : PROJETFINAL1
+- Text classification : PROJETFINAL2
+- Time series predictions : PROJETFINAL3
   
 The notebooks for these subprojects can be found in the folder notebooks.
 This readme concerns the **time series (temperature) predictions application**, as we created an api for this. 
@@ -96,23 +96,23 @@ python ./api/tests/test_api.py
 
 ### Connect and pull
 Connect to ghrc.io and pull the docker image.  
-I didn't have the time to figure out the latest tag.
+I didn't have the time to figure out the :latest tag, but :664bfdc is the last push - 1 
 
 ```bash
 docker login ghcr.io -u <username> -p <access_token>
-docker pull ghcr.io/leahchercham/master_project:b0c542b
+docker pull ghcr.io/leahchercham/master_project:664bfdc
 ```
 ### Execute API tests
 Then you can execute the tests : (Scroll to the top of the output to see the test results):  
 ```bash
-docker run --rm -p 8001:8001 ghcr.io/leahchercham/master_project:b0c542b python ./api/tests/test_api.py
+docker run --rm -p 8000:8000 ghcr.io/leahchercham/master_project:664bfdc python ./api/tests/test_api.py
 ```
 ### Execute API
 Or you can simply run the docker image and then use the FastAPI endpoint on your localhost:  
 ```bash
-docker run --rm -p 8001:8001 ghcr.io/leahchercham/master_project:b0c542b python ./api/main.py
+docker run --rm -p 8000:8000 ghcr.io/leahchercham/master_project:664bfdc
 ```
-
+Then go to http://127.0.0.1:8000/, there you can test the routes get/predictions/{date}, get/combined_predictions/{start_date}/{end_date} and get/version.
 
 # CI/CD 
 
