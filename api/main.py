@@ -54,7 +54,7 @@ def get_predictions(date: date):
         # Retrieve predictions for the specified date
         predictions, pred_true = generate_predictions(date, conn, cursor)
         logging.info(f'Returning predictions for date: {date}')
-        return {"predictions": predictions}
+        return {"predictions and true labels if they are" : pred_true}
     
     except Exception as e:
         # Return error message if any exception occurs
@@ -71,19 +71,12 @@ def get_combined_predictions(start_date: date, end_date: date):
         # Retrieve combined predictions and observed data for the specified period
         predictions, pred_true, true_labels_df = generate_period_predictions(start_date,end_date, conn, cursor)
         
-        return {"predictions and true labels": pred_true}
+        return {"predictions and true labels if they are": pred_true}
     
     except Exception as e:
         # Return error message if any exception occurs
         logging.error(f'Error occurred while processing combined_predictions for start_date {start_date} and end_date {end_date}: {e}')
         raise HTTPException(status_code=500, detail=str(e))
-    
-    
-
-# Basic health check endpoint
-@app.get("/healthcheck/")
-def healthcheck():
-    return {"status": "ok"}
 
 
 # Version endpoint
@@ -115,9 +108,10 @@ if __name__ == "__main__":
     # create and fit the model
     model = fit_model(X, y)
     
-    #TEST PLOT
-    predictions, pred_true, true_labels_df = generate_period_predictions("2024-03-02", "2024-03-10", conn, cursor)
-    print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
+    # #TESTS
+    # predictions, pred_true = generate_predictions("2024-05-02", conn, cursor)
+    # predictions, pred_true, true_labels_df = generate_period_predictions("2024-01-02", "2024-01-10", conn, cursor)
+    # print(f'path to image: {plot_true_pred(predictions, true_labels_df)}')
     
     # start Fast API
     uvicorn.run("main:app", port=8001, reload=False)

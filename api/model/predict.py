@@ -85,17 +85,20 @@ def generate_period_predictions(start_date, end_date, conn, cursor):
     predictions_series = pd.Series(predictions, index=pred_true_preprocessed_df.index, name='predictions')
 
     # Convert the datetime strings in true_labels to the same format
-    
-    true_labels_array = [x[1] for x in true_labels]
-    true_labels_series = pd.Series(true_labels_array, index=pred_true_preprocessed_df.index, name='true_labels')
-
-    pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series, true_labels_series], axis=1)
+    if (start_date_object < datetime.now()) and (end_date_object < datetime.now()):
+        true_labels_array = [x[1] for x in true_labels]
+        true_labels_series = pd.Series(true_labels_array, index=pred_true_preprocessed_df.index, name='true_labels')
+        true_labels_df = pd.DataFrame(true_labels_series)
+        pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series, true_labels_series], axis=1)
+        pred_true = pd.concat([predictions_series, true_labels_series], axis=1)
+    else:
+        true_labels_df = pd.DataFrame()
+        pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series,], axis=1)
+        pred_true = pd.concat([predictions_series], axis=1)
 
     # Save predictions to db
     save_to_db(pred_true_preprocessed_df, "predictions", conn, cursor)
     
-    pred_true = pd.concat([predictions_series, true_labels_series], axis=1)
-    true_labels_df = pd.DataFrame(true_labels_series)
     return predictions, pred_true, true_labels_df
 
 
@@ -154,26 +157,26 @@ def generate_predictions(input_data, conn, cursor):
     # output a list of predictions (hours from 0 to 24 in 3h steps)
     predictions = loaded_model.predict(preprocessed_df) # Array of temperatures
 
-    true_labels = retrieve_true_labels_for_date(date_object, conn, cursor) # Returns an array of tupples (date_time, temperature)
-
     # preprocessed_df is a dataframe with date_time as index and some columns. 
     # add to preprocessed_df a column predictions thanks to the array predictions (array containing the predictions in the correct order), add also a column true_labels thanks to true_labels (array of tuples (date_time, temperature) and add column model where it is commun.model_name for all 
     pred_true_preprocessed_df = preprocessed_df.copy()
     pred_true_preprocessed_df['model'] = commun.model_name
-    
     predictions_series = pd.Series(predictions, index=pred_true_preprocessed_df.index, name='predictions')
-
-    # Convert the datetime strings in true_labels to the same format
     
-    true_labels_array = [x[1] for x in true_labels]
-    true_labels_series = pd.Series(true_labels_array, index=pred_true_preprocessed_df.index, name='true_labels')
-
-    pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series, true_labels_series], axis=1)
+    if(date_object < datetime.now()):
+        true_labels = retrieve_true_labels_for_date(date_object, conn, cursor) # Returns an array of tupples (date_time, temperature)
+        # Convert the datetime strings in true_labels to the same format
+        true_labels_array = [x[1] for x in true_labels]
+        true_labels_series = pd.Series(true_labels_array, index=pred_true_preprocessed_df.index, name='true_labels')
+        pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series, true_labels_series], axis=1)
+        pred_true = pd.concat([predictions_series, true_labels_series], axis=1)
+    else :
+        true_labels = None
+        pred_true_preprocessed_df = pd.concat([pred_true_preprocessed_df, predictions_series], axis=1)
+        pred_true = pd.concat([predictions_series], axis=1)
 
     # Save predictions to db
     save_to_db(pred_true_preprocessed_df, "predictions", conn, cursor)
-    
-    pred_true = pd.concat([predictions_series, true_labels_series], axis=1)
     
     # TODO : save as run and calculate score
 

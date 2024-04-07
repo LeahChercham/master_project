@@ -22,13 +22,13 @@ class TestAPI(unittest.TestCase):
         # Test the version endpoint "/predictions/{date}/"
         response = client.get("/predictions/2024-01-05")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("predictions", response.json())
+        self.assertIn("predictions and true labels if they are", response.json())
         
     def test_combined_predictions_endpoint(self):
         # Test the version endpoint "/combined_predictions/{start_date}/{end_date}/"
         response = client.get("/combined_predictions/2024-01-05/2024-01-10")
         self.assertEqual(response.status_code, 200)
-        self.assertIn("predictions and true labels", response.json())
+        self.assertIn("predictions and true labels if they are", response.json())
 
 
 if __name__ == '__main__':
