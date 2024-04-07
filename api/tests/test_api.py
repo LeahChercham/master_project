@@ -19,7 +19,7 @@ class TestAPI(unittest.TestCase):
         self.assertIn("data_version", response.json())
         # Check if the keys are present in the data_version object
         data_version = response.json()["data_version"]
-        expected_keys = ["latituude", "longitude", "start_date", "end_date"]
+        expected_keys = ["latitude", "longitude", "start_date", "end_date"]
         for key in expected_keys:
             self.assertIn(key, data_version)
         
